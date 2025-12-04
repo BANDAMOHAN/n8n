@@ -1,0 +1,162 @@
+{
+  "name": "Text edit using Nano banana with n8n",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Nano Banana",
+        "formDescription": "Text edit from Image",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Instruction"
+            },
+            {
+              "fieldLabel": "Image",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".jpg, .png, .jpeg"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -400,
+        -144
+      ],
+      "id": "cbc03d31-eeb6-4bc6-b289-44365f6f4ee1",
+      "name": "On form submission",
+      "webhookId": "d5130e52-7cd4-4543-a402-22f377f17e04"
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "binaryPropertyName": "Image",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -160,
+        64
+      ],
+      "id": "d7b002ca-0693-46fb-90d5-7313255b8b34",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openRouterApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"google/gemini-2.5-flash-image-preview\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\n          \"type\": \"image_url\",\n          \"image_url\": {\n            \"url\": \"data:image/png;base64,{{ $json.data }}\"\n          }\n        },\n        {\n          \"type\": \"text\",\n          \"text\": \"{{ $('On form submission').item.json.Instruction }}\"\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        80,
+        -144
+      ],
+      "id": "927b7cc8-8c55-41a2-a666-67bc1de95eb5",
+      "name": "HTTP Request",
+      "credentials": {
+        "openRouterApi": {
+          "id": "utbyoXeqvIykalwM",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"base64\": \"{{ $json.choices[0].message.images[0].image_url.url.replace(\"data:image/png;base64,\", \"\") }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        336,
+        64
+      ],
+      "id": "7070f2e2-83c2-4359-97bf-bf3a1d262bae",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "base64",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        -144
+      ],
+      "id": "ed8c57bf-51b5-4d07-a4b8-1c3b2aae3744",
+      "name": "Convert to File"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "fbf25ff9-9e3a-47e8-a97c-f1443a5b3f34",
+  "meta": {
+    "instanceId": "627b12dbabf754d93b1c3c1ceea1dd54b0ddc2be878e852bafa86cd5d7d777a1"
+  },
+  "id": "R7ciSbRSr6vZ4ntw",
+  "tags": []
+}
